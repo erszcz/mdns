@@ -75,10 +75,16 @@ defmodule Mdns.Server do
     end
 
     def handle_packet(ip, packet, state) do
-        record = DNS.Record.decode(packet)
-        case record.header.qr do
-            false -> handle_query(ip, record, state)
-            _ -> state
+        try do
+          record = DNS.Record.decode(packet)
+          case record.header.qr do
+              false -> handle_query(ip, record, state)
+              _ -> state
+          end
+        catch
+          :error, {:badmatch, {:error, :fmt}} ->
+            Logger.error("DNS packet decode error: #{inspect ip} #{inspect packet}")
+            state
         end
     end
 
